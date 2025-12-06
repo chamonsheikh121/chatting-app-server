@@ -1,0 +1,93 @@
+model User {
+  id               String         @id @default(cuid())
+  email            String         @unique
+  password         String
+  name             String?
+  role             UserRoles      @default(User)
+  avatarUrl        String?
+  status           UserChatStatus @default(OFFLINE)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  messages         Message[]      @relation("senderMessages")
+  sentCalls        Call[]         @relation("caller")
+  receivedCalls    Call[]         @relation("callee")
+  groupMemberships GroupMember[]
+}
+
+enum UserRoles {
+  User
+  ADMIN
+}
+
+enum UserChatStatus {
+  ONLINE
+  OFFLINE
+}
+
+model Message {
+  id         String      @id @default(cuid())
+  content    String?
+  senderId   String
+  receiverId String? // for direct messages
+  groupId    String? // for group messages
+  type       MessageType @default(TEXT)
+  createdAt  DateTime    @default(now())
+  sender     User        @relation("senderMessages", fields: [senderId], references: [id])
+  group      Group?      @relation(fields: [groupId], references: [id])
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM
+}
+
+model Group {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  avatarUrl   String?
+  createdAt   DateTime      @default(now())
+  members     GroupMember[]
+  messages    Message[]
+}
+
+model GroupMember {
+  id       String    @id @default(cuid())
+  groupId  String
+  userId   String
+  role     GroupRole @default(MEMBER)
+  joinedAt DateTime  @default(now())
+  user     User      @relation(fields: [userId], references: [id])
+  group    Group     @relation(fields: [groupId], references: [id])
+}
+
+enum GroupRole {
+  ADMIN
+  MEMBER
+}
+
+model Call {
+  id        String     @id @default(cuid())
+  callerId  String
+  calleeId  String
+  type      CallType   @default(VOICE)
+  status    CallStatus @default(REQUESTED)
+  startedAt DateTime?
+  endedAt   DateTime?
+  caller    User       @relation("caller", fields: [callerId], references: [id])
+  callee    User       @relation("callee", fields: [calleeId], references: [id])
+}
+
+enum CallType {
+  VOICE
+  VIDEO
+}
+
+enum CallStatus {
+  REQUESTED
+  ONGOING
+  ENDED
+  MISSED
+}
