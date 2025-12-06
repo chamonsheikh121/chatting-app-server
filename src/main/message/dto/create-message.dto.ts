@@ -2,6 +2,7 @@ import { IsString } from 'class-validator';
 import { MessageType } from 'generated/prisma/enums';
 
 export class CreateMessageDto {
+  
   @IsString()
   content: string;
 
